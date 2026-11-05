@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mekanism Fission Reactor Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <header class="header">
+    <div>
+      <h1>Fission Reactor Builder</h1>
+      <p class="subtitle">Mekanism 1.18.2 · Compatible JEMM</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" id="btn-import" class="btn">📥 Importer</button>
+      <button type="button" id="btn-export" class="btn primary">📤 Exporter</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <section class="section">
+        <h2>Dimensions</h2>
+        <p class="hint">Min 3×3×4 · Max 18×18×18</p>
+        <label class="field"><span>Largeur (X) <strong id="width-val">10</strong></span>
+          <input type="range" id="width" min="3" max="18" value="10" />
+        </label>
+        <label class="field"><span>Longueur (Z) <strong id="length-val">10</strong></span>
+          <input type="range" id="length" min="3" max="18" value="10" />
+        </label>
+        <label class="field"><span>Hauteur (Y) <strong id="height-val">18</strong></span>
+          <input type="range" id="height" min="4" max="18" value="18" />
+        </label>
+      </section>
+
+      <section class="section">
+        <h2>Burn Rate</h2>
+        <label class="field"><span>Taux (mB/t) <strong id="burn-rate-val">480</strong></span>
+          <input type="range" id="burn-rate" min="0" max="480" value="480" />
+        </label>
+        <p class="hint">Max = assemblages × burnPerAssembly · Colonne max <strong id="pillar-max">15</strong> · Intérieur <strong id="inner-vol">8×8×16</strong></p>
+      </section>
+
+      <section class="section">
+        <h2>Disposition</h2>
+        <div class="btn-row">
+          <button type="button" id="btn-checker" class="btn">Damier optimal</button>
+          <button type="button" id="btn-clear" class="btn">Effacer</button>
+          <button type="button" id="btn-fill" class="btn">Remplir tout</button>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Ports & refroidissement</h2>
+        <p class="hint">Min. 4 ports · +1 port coolant = +1 ligne tuyau</p>
+        <label class="field"><span>Ports Input Coolant <strong id="ports-in-val">1</strong></span>
+          <input type="range" id="ports-in" min="1" max="150" value="1" />
+        </label>
+        <label class="field"><span>Ports Output Coolant <strong id="ports-out-val">1</strong></span>
+          <input type="range" id="ports-out" min="1" max="150" value="1" />
+        </label>
+        <label class="field"><span>Tier tuyau</span>
+          <select id="pipe-tier" class="select-field">
+            <option>Basic</option><option>Advanced</option><option>Elite</option><option selected>Ultimate</option>
+          </select>
+        </label>
+        <button type="button" id="btn-apply-ports" class="btn full">Appliquer aux sliders</button>
+        <div class="mode-toggle">
+          <button type="button" class="btn active" data-cooling-mode="water">Eau</button>
+          <button type="button" class="btn" data-cooling-mode="sodium">Sodium</button>
+        </div>
+        <dl class="stats">
+          <div class="stat-row"><dt>Débit coolant</dt><dd id="cool-flow">—</dd></div>
+          <div class="stat-row"><dt>Steam / sortie</dt><dd id="cool-steam">—</dd></div>
+          <div class="stat-row"><dt>Condensers</dt><dd id="cool-condensers">—</dd></div>
+          <div class="stat-row"><dt>Total ports</dt><dd id="cool-ports-total">—</dd></div>
+        </dl>
+        <p class="hint formula-hint" id="cool-ports-formula">—</p>
+        <p class="hint" id="cool-pipe-rec">—</p>
+        <div id="cooling-alerts" class="cooling-alerts"></div>
+      </section>
+
+      <section class="section">
+        <h2>Coût Fissile Fuel</h2>
+        <div class="field-row">
+          <label class="field"><span>Machines ×256</span>
+            <select id="machine-256-speed" class="select-field">
+              <option value="1">Base — 1 mB/t</option>
+              <option value="16">4 upgrades — 16 mB/t</option>
+              <option value="64">6 upgrades — 64 mB/t</option>
+              <option value="256" selected>Max — 256 mB/t</option>
+            </select>
+          </label>
+          <label class="field"><span>Oxidizer & Dissolution</span>
+            <select id="machine-10-speed" class="select-field">
+              <option value="1">Base — ×1</option>
+              <option value="4">4 upgrades — ×4</option>
+              <option value="6">6 upgrades — ×6</option>
+              <option value="10" selected>Max — ×10</option>
+            </select>
+          </label>
+        </div>
+        <dl class="stats fuel-stats">
+          <div class="stat-row highlight"><dt>Consommation</dt><dd id="fuel-consume">—</dd></div>
+          <div class="stat-row"><dt>/ seconde (20 t/s)</dt><dd id="fuel-consume-s">—</dd></div>
+          <div class="stat-row"><dt>/ jour MC</dt><dd id="fuel-consume-day">—</dd></div>
+          <div class="stat-row"><dt>Autonomie tank</dt><dd id="fuel-tank-duration">—</dd></div>
+          <div class="stat-row"><dt>Déchets</dt><dd id="fuel-waste">—</dd></div>
+          <div class="stat-row highlight"><dt>Uranium</dt><dd id="fuel-uranium">—</dd></div>
+          <div class="stat-row"><dt>Fluorite</dt><dd id="fuel-fluorite">—</dd></div>
+        </dl>
+        <h3 class="subsection-title">Machines — production continue</h3>
+        <dl class="stats fuel-stats machine-stats">
+          <div class="stat-row highlight"><dt>Isotopic Centrifuge</dt><dd id="fuel-mach-centrifuge">—</dd></div>
+          <div class="stat-row highlight"><dt>Chemical Infuser</dt><dd id="fuel-mach-infuser">—</dd></div>
+          <div class="stat-row"><dt>Dissolution Chamber</dt><dd id="fuel-mach-dissolution">—</dd></div>
+          <div class="stat-row"><dt>Chemical Oxidizer</dt><dd id="fuel-mach-oxidizer">—</dd></div>
+          <div class="stat-row"><dt>Rotary Condensentrator</dt><dd id="fuel-mach-rotary">—</dd></div>
+          <div class="stat-row"><dt>Electrolytic Separator</dt><dd id="fuel-mach-electrolytic">—</dd></div>
+          <div class="stat-row"><dt>Soufre (H2SO4)</dt><dd id="fuel-sulfur">—</dd></div>
+        </dl>
+        <p class="hint formula-hint">kB = 1000 mB (buckets) · 1 lingot U → 100 mB Fissile · Enrichment Chamber non compté.</p>
+      </section>
+
+      <section class="section">
+        <h2>Statistiques</h2>
+        <dl class="stats">
+          <div class="stat-row"><dt>Assemblages fuel</dt><dd id="stat-fuel">—</dd></div>
+          <div class="stat-row"><dt>Control rods</dt><dd id="stat-rods">—</dd></div>
+          <div class="stat-row"><dt>Efficacité boil</dt><dd id="stat-boil">—</dd></div>
+          <div class="stat-row"><dt>Burn max</dt><dd id="stat-max-burn">—</dd></div>
+          <div class="stat-row"><dt>Coolant cap.</dt><dd id="stat-coolant">—</dd></div>
+          <div class="stat-row"><dt>Tank fuel</dt><dd id="stat-fuel-tank">—</dd></div>
+          <div class="stat-row"><dt>Steam cap.</dt><dd id="stat-steam">—</dd></div>
+          <div class="stat-row"><dt>Temp. eau</dt><dd id="stat-temp-water" class="temp">—</dd></div>
+          <div class="stat-row"><dt>Temp. sodium</dt><dd id="stat-temp-sodium" class="temp">—</dd></div>
+        </dl>
+      </section>
+
+      <section class="section">
+        <h2>Matériaux estimés</h2>
+        <dl class="stats">
+          <div class="stat-row"><dt>Fuel assembly</dt><dd id="mat-fuel">—</dd></div>
+          <div class="stat-row"><dt>Control rod</dt><dd id="mat-rod">—</dd></div>
+          <div class="stat-row"><dt>Casing</dt><dd id="mat-casing">—</dd></div>
+          <div class="stat-row"><dt>Glass</dt><dd id="mat-glass">—</dd></div>
+          <div class="stat-row"><dt>Ports</dt><dd id="mat-port">—</dd></div>
+        </dl>
+      </section>
+    </aside>
+
+    <div class="main-panel">
+      <div class="view-tabs">
+        <button type="button" class="btn active" data-view="2d">Plan 2D</button>
+        <button type="button" class="btn" data-view="3d">Aperçu 3D</button>
+      </div>
+      <div id="view-2d" class="grid-wrapper">
+        <canvas id="grid-canvas"></canvas>
+        <p class="grid-note">Clic gauche = colonne max · Clic droit = effacer · Molette = hauteur · Alt+glisser ou molette du milieu = déplacer · Ctrl+molette = zoom</p>
+      </div>
+      <div id="view-3d" class="preview-wrapper hidden">
+        <p class="grid-note">Glisser = tourner · clic droit = déplacer · molette = zoom</p>
+        <div id="preview-3d" class="preview-3d"></div>
+        <label class="field inline"><input type="checkbox" id="layer-mode" /> Couche par couche</label>
+        <label class="field"><span>Couche Y <strong id="layer-y-val">0 / 17</strong></span>
+          <input type="range" id="layer-y" min="0" max="17" value="0" />
+        </label>
+      </div>
+      <section class="section json-section">
+        <h2>JSON JEMM</h2>
+        <textarea id="json-output" readonly rows="8"></textarea>
+        <button type="button" id="btn-copy-json" class="btn">Copier JSON</button>
+      </section>
+    </div>
+  </main>
+
+  <div id="toast" class="toast"></div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
