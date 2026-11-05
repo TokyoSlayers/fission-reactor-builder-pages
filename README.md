@@ -19,6 +19,19 @@ Ouvrir [http://localhost:8766/](http://localhost:8766/)
 
 Sans textures, l'aperçu 3D affiche des couleurs de secours.
 
+## Démo en ligne (GitHub Pages)
+
+https://tokyoslayers.github.io/fission-reactor-builder-pages/
+
+Code source privé : [`fission-reactor-builder`](https://github.com/TokyoSlayers/fission-reactor-builder) — site public via [`fission-reactor-builder-pages`](https://github.com/TokyoSlayers/fission-reactor-builder-pages).
+
+Republier après changement :
+
+```powershell
+git push origin main
+git push https://github.com/TokyoSlayers/fission-reactor-builder-pages.git main:main
+```
+
 ## Fonctions
 
 - Grille 2D (plan intérieur JEMM), import/export JSON
